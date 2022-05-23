@@ -1,14 +1,13 @@
 const fs = require('fs');
 
-
 const constants = {
     numbers: '0123456789',
-    characters: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
-    ignores: '\t \r \n'
+    characters: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 }
 
 const TokenTypes = {
     IDENT: 'IDENT',
+    STRING: 'STRING',
     INT: 'INT',
     FLOAT: 'FLOAT',
     ADD_OP: 'ADD_OP',
@@ -62,35 +61,27 @@ class Lexer {
     start() {
         var tokens = []
         while(this.currentChar != null){
-            if(constants.ignores.includes(this.currentChar)){
-                this.nextToken()
-            } else if(constants.numbers.includes(this.currentChar)){
+            
+            if(constants.numbers.includes(this.currentChar)){
                tokens.push(this.makeNumber())
-            } else if(constants.characters.includes(this.currentChar)){
+            } else if(this.currentChar == "'"){
                 tokens.push(this.makeString())
                 this.nextToken()
-            } else if(this.currentChar == '+'){
-                tokens.push(new Token(TokenTypes.ADD_OP, null, this.position))
-                this.nextToken()
-            } else if(this.currentChar == '-'){
-                tokens.push(new Token(TokenTypes.SUB_OP, null, this.position))
-                this.nextToken()
-            } else if(this.currentChar == '*'){
-                tokens.push(new Token(TokenTypes.MULT_OP, null, this.position))
-                this.nextToken()
-            } else if(this.currentChar == '/'){
-                tokens.push(new Token(TokenTypes.DIV_OP, null, this.position))
-                this.nextToken()
-            }else if(this.currentChar == '('){
-                tokens.push(new Token(TokenTypes.LEFT_PAREN, null, this.position))
+            } else if(constants.characters.includes(this.currentChar)){
+                this.makeArithmeticOperation(tokens)
+            } else if(this.currentChar == '('){
+                tokens.push(new Token(TokenTypes.LEFT_PAREN, '(', this.position))
                 this.nextToken()
             }else if(this.currentChar == ')'){
-                tokens.push(new Token(TokenTypes.RIGHT_PAREN, null, this.position))
+                tokens.push(new Token(TokenTypes.RIGHT_PAREN, ')', this.position))
                 this.nextToken()
             } else {
                 this.nextToken()
             }
+
+            
         }
+
         tokens.push(new Token(TokenTypes.EOF, null, this.position))
         return tokens;
     }
@@ -127,18 +118,49 @@ class Lexer {
     }
 
     makeString() {
+
         var positionStart = this.position
         var str = '';
         var chars = constants.characters;
         var digits = constants.numbers;
+        this.nextToken()
 
-        while(this.currentChar != null && (chars.includes(this.currentChar) || digits.includes(this.currentChar))) {
+        while(this.currentChar != "'") {
+           
                 str += this.currentChar;
             this.nextToken()
         }
 
-        return new Token(TokenTypes.IDENT, str, positionStart, this.position )
+        return new Token(TokenTypes.STRING, str, positionStart, this.position )
 
+    }
+
+    makeArithmeticOperation(tokens) {
+        var positionStart = this.position
+        var str = '';
+        var chars = constants.characters;
+
+        while(this.currentChar != null && chars.includes(this.currentChar)) {   
+            str += this.currentChar;
+        this.nextToken()
+    }
+
+    if(str == 'topla'){
+        tokens.push(new Token(TokenTypes.ADD_OP, '+', this.position))
+        this.nextToken()
+    } else if(str == 'cikar'){
+        tokens.push(new Token(TokenTypes.SUB_OP, '-', this.position))
+        this.nextToken()
+    } else if(str == 'carp'){
+        tokens.push(new Token(TokenTypes.MULT_OP, '*', this.position))
+        this.nextToken()
+    } else if(str == 'bol'){
+        tokens.push(new Token(TokenTypes.DIV_OP, '/', this.position))
+        this.nextToken()
+    } else {
+        throw new Error(`Undefined syntax '${str}'`)
+    }
+    return 1;
     }
 
 }
@@ -152,6 +174,11 @@ class Parser {
     constructor(tokens) {
         this.tokens = tokens;
         this.tokenIndex = -1;
+        this.node = {
+            type: 'CallExpression',
+            name: null,
+            params: [],
+          };
         this.next()
     }
 
@@ -166,52 +193,59 @@ class Parser {
     parse() {
         let res = this.expr();
         if(this.currentToken.type != TokenTypes.EOF) {
-            throw new Error("Expected PARANTHESIS")
+            throw new Error("Expected arithmetic operation or paranthesis")
         }
-        return console.log('Nothing wrong');
+        
+        return console.log('nothing wrong')
     }
 
 
     factor() {
+        console.log('Enter <factor>')
         if([TokenTypes.ADD_OP, TokenTypes.SUB_OP].includes(this.currentToken.type)){
             this.next();
             this.factor()
-        }else if([TokenTypes.INT, TokenTypes.FLOAT].includes(this.currentToken.type)){
+        }else if([TokenTypes.INT, TokenTypes.FLOAT, TokenTypes.IDENT].includes(this.currentToken.type)){
             this.next()
        } else if(this.currentToken.type == TokenTypes.LEFT_PAREN) {
+
             this.next();
             this.expr();
+
             if(this.currentToken.type == TokenTypes.RIGHT_PAREN){
                 this.next()
             } else {
-                throw new Error('something went wrong')
+                throw new Error('expected right parenthesis')
             }
         }
-           
+        console.log('exit <factor>')
        }
 
     
 
     term() {
+        console.log('Enter <term>')
         this.factor();
         while([TokenTypes.MULT_OP, TokenTypes.DIV_OP ].includes(this.currentToken.type) ){
             this.next();
             this.factor();
         }
-
+        console.log('exit <term>')
     }
 
     expr() {
+        console.log('Enter <expr>')
         this.term();
         while([TokenTypes.ADD_OP, TokenTypes.SUB_OP].includes(this.currentToken.type)){
             this.next();
             this.term()
         }
-    }
-    
-  
-    
+        console.log('Exit <expr>')
+    }   
 }
+
+
+
 
 
 
@@ -229,7 +263,6 @@ function main(args) {
             var parser = new Parser(returns)
             parser.parse()
             //console.log(returns)
-            
         } else {
             return console.log(`File '${path}' could not be found!`)
         }
