@@ -1,5 +1,4 @@
 expr  : term ((PLUS | MINUS) term)*
-       : assign id = str
 
 term  : factor  ((MUL|DIV) factor)*
 
@@ -7,9 +6,4 @@ factor : INT|FLOAT
         : (PLUS|MINUS) factor
         : LPAREN expr RPAREN
 
-assign: KEYWORD.ata
-
-id: IDENT
-
-str: str (str)*
-   : abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+assign : KEYWORD[0] IDENT ASSIGN STRING

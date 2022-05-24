@@ -16,6 +16,7 @@ const TokenTypes = {
     DIV_OP: 'DIV_OP',
     LEFT_PAREN: 'LEFT_PAREN',
     RIGHT_PAREN: 'RIGTH_PAREN',
+    ASSIGN: 'ASSIGN',
     EOF: 'EOF',
     KEYWORDS: [
         "ata"
@@ -145,7 +146,10 @@ class Lexer {
         this.nextToken()
     }
 
-    if(str == 'topla'){
+    if(str == 'ata'){
+        tokens.push(new Token(TokenTypes.KEYWORDS[0], 'ata', this.position))
+        this.nextToken()
+    } else if(str == 'topla'){
         tokens.push(new Token(TokenTypes.ADD_OP, '+', this.position))
         this.nextToken()
     } else if(str == 'cikar'){
@@ -157,8 +161,12 @@ class Lexer {
     } else if(str == 'bol'){
         tokens.push(new Token(TokenTypes.DIV_OP, '/', this.position))
         this.nextToken()
-    } else {
-        throw new Error(`Undefined syntax '${str}'`)
+    }else if(str == 'assign'){
+        tokens.push(new Token(TokenTypes.ASSIGN, '=', this.position))
+        this.nextToken()
+    }  else {
+        tokens.push(new Token(TokenTypes.IDENT, 'ident', this.position))
+        this.nextToken()
     }
     return 1;
     }
@@ -191,9 +199,14 @@ class Parser {
     }
 
     parse() {
-        let res = this.expr();
+        if(this.currentToken.type == TokenTypes.KEYWORDS[0]){
+            let res = this.assign();
+        } else if(this.currentToken.type != TokenTypes.IDENT) {
+            let res = this.expr();
+        }
+
         if(this.currentToken.type != TokenTypes.EOF) {
-            throw new Error("Expected arithmetic operation or paranthesis")
+           throw new Error("SYNTAX ERROR")
         }
         
         return console.log('nothing wrong')
@@ -215,7 +228,7 @@ class Parser {
             if(this.currentToken.type == TokenTypes.RIGHT_PAREN){
                 this.next()
             } else {
-                throw new Error('expected right parenthesis')
+                throw new Error('Expected arithmetic operation or paranthesis')
             }
         }
         console.log('exit <factor>')
@@ -235,6 +248,7 @@ class Parser {
 
     expr() {
         console.log('Enter <expr>')
+
         this.term();
         while([TokenTypes.ADD_OP, TokenTypes.SUB_OP].includes(this.currentToken.type)){
             this.next();
@@ -242,6 +256,30 @@ class Parser {
         }
         console.log('Exit <expr>')
     }   
+
+    assign() {
+        if(this.currentToken.type == TokenTypes.KEYWORDS[0]){
+            this.next()
+            
+            if(this.currentToken.type == TokenTypes.IDENT){
+                this.next()
+
+                if(this.currentToken.type == TokenTypes.ASSIGN){
+                    this.next()
+
+                    if(this.currentToken.type == TokenTypes.STRING){
+                        this.next()
+                    }
+                }
+
+            }
+
+
+        } else {
+            throw new Error('expected assignment KEYWORD which is "ata"')
+        }
+    }
+
 }
 
 
