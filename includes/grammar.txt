@@ -7,11 +7,10 @@ term  : factor  ((MUL|DIV) factor)*
 
 factor : INT|FLOAT
         : (PLUS|MINUS) factor
-        : LPAREN expr RPAREN
+        : LPAREN expr RPAREN    
 
 assign : key
 
 key   : int IDENT ASSIGN INT
         : float IDENT ASSIGN FLOAT
-        : string IDENT ASSIGN string
-
+        : string IDENT ASSIGN STRING
