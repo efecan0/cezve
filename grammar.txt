@@ -1,3 +1,6 @@
+parse: (KEYWORD[0] | KEYWORD[1] | KEYWORD[2]) assign
+      : expr
+
 expr  : term ((PLUS | MINUS) term)*
 
 term  : factor  ((MUL|DIV) factor)*
@@ -6,4 +9,9 @@ factor : INT|FLOAT
         : (PLUS|MINUS) factor
         : LPAREN expr RPAREN
 
-assign : KEYWORD[0] IDENT ASSIGN STRING
+assign : key
+
+key   : int IDENT ASSIGN INT
+        : float IDENT ASSIGN FLOAT
+        : string IDENT ASSIGN string
+
